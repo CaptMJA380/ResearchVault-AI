@@ -23,7 +23,7 @@ ResearchVault AI is a research paper intelligence platform designed to help acad
 |-------------|-----------------------------------|
 | Frontend    | React.js + Vite                   |
 | Backend     | Node.js + Express.js              |
-| Database    | MongoDB + Mongoose (future)       |
+| Database    | MongoDB + Mongoose                |
 | PDF Extract | pdf-parse or similar (future)     |
 | AI Layer    | Google Gemini / OpenAI (future)   |
 | Auth        | JWT-based authentication (future) |
@@ -37,31 +37,36 @@ ResearchVault AI is a research paper intelligence platform designed to help acad
 - Documented technology stack
 - Created project plan
 
-### ✅ Step 2 — MERN Stack Setup (Current)
+### ✅ Step 2 — MERN Stack Setup
 - Scaffolded React + Vite frontend in `client/`
 - Created Express.js backend in `server/`
 - Configured CORS, environment variables, health endpoint
 - Verified frontend ↔ backend communication
 - Configured `.gitignore`
 
-### 🔲 Step 3 — MongoDB Integration
-- Set up MongoDB connection via Mongoose
-- Define Paper schema/model
-- Create CRUD API endpoints for papers
+### ✅ Step 3 — MongoDB Connection and Data Models (Completed - Connection Pending Config)
+- Installed Mongoose ODM in `server/`
+- Implemented reusable connection module `server/config/db.js` with connection state reporting (`connected`, `connecting`, `disconnected`, `not_configured`)
+- Implemented `Paper` schema & model (`server/models/Paper.js`) with metadata, document attributes, extracted text, AI summary subdocument, and embedded notes with timestamps
+- Implemented `ResearchCollection` schema & model (`server/models/ResearchCollection.js`) referencing Paper models
+- Implemented offline model verification suite `server/scripts/check-models.js` (`npm run check:models`)
+- Implemented live connection checker `server/scripts/check-db.js` (`npm run check:db`)
+- Enhanced `/api/health` with database state while preserving original response contract
+- Added `/api/health/ready` readiness endpoint (HTTP 200 when connected, HTTP 503 when disconnected/unconfigured)
 
 ### 🔲 Step 4 — PDF Upload & Text Extraction
 - Implement file upload with Multer
 - Extract text from PDFs using pdf-parse
-- Store extracted content in MongoDB
+- Store extracted content and file metadata in MongoDB
 
 ### 🔲 Step 5 — Search & Collections
 - Implement full-text search across papers
-- Create collections/tags feature
-- Add notes functionality per paper
+- Create collections/tags feature and collection CRUD endpoints
+- Add personal notes CRUD functionality per paper
 
 ### 🔲 Step 6 — AI Summaries
 - Integrate Gemini / OpenAI API
-- Generate concise paper summaries on demand
+- Generate concise, structured paper summaries on demand
 - Display AI insights in the frontend
 
 ### 🔲 Step 7 — Authentication
@@ -89,6 +94,14 @@ researchvault-ai/
 │   ├── index.html
 │   └── package.json
 ├── server/              # Node.js + Express backend
+│   ├── config/
+│   │   └── db.js        # Mongoose connection & state tracker
+│   ├── models/
+│   │   ├── Paper.js     # Research paper schema & model
+│   │   └── ResearchCollection.js # Collection schema & model
+│   ├── scripts/
+│   │   ├── check-models.js # Offline model validation checks
+│   │   └── check-db.js  # Live database connection tester
 │   ├── server.js
 │   ├── package.json
 │   └── .env.example
@@ -102,7 +115,8 @@ researchvault-ai/
 
 ## Notes
 
-- MongoDB will be added in Step 3. Do not implement DB logic in Step 2.
+- MongoDB schema definitions and connection handlers completed in Step 3.
+- No paper CRUD API endpoints or file upload until Step 4/Step 5.
 - No authentication until Step 7.
 - No AI integration until Step 6.
 - Keep each step focused and independently testable.

@@ -12,7 +12,7 @@ Upload academic PDFs, extract their text, manage your library, search content, o
 |-------------|-------------------------------------|
 | Frontend    | React 18 + Vite 5                   |
 | Backend     | Node.js 24 + Express 4              |
-| Database    | MongoDB + Mongoose *(Step 3)*       |
+| Database    | MongoDB + Mongoose                  |
 | PDF Extract | pdf-parse *(Step 4)*                |
 | AI          | Google Gemini / OpenAI *(Step 6)*   |
 | Auth        | JWT *(Step 7)*                      |
@@ -21,16 +21,16 @@ Upload academic PDFs, extract their text, manage your library, search content, o
 
 ## Implementation Status
 
-| Step | Description                     | Status       |
-|------|---------------------------------|--------------|
-| 1    | Project Planning                | ✅ Complete  |
-| 2    | MERN Stack Setup                | ✅ Complete  |
-| 3    | MongoDB Integration             | 🔲 Upcoming  |
-| 4    | PDF Upload & Text Extraction    | 🔲 Upcoming  |
-| 5    | Search & Collections            | 🔲 Upcoming  |
-| 6    | AI Summaries                    | 🔲 Upcoming  |
-| 7    | Authentication                  | 🔲 Upcoming  |
-| 8    | Deployment                      | 🔲 Upcoming  |
+| Step | Description                     | Status                                    |
+|------|---------------------------------|-------------------------------------------|
+| 1    | Project Planning                | ✅ Complete                               |
+| 2    | MERN Stack Setup                | ✅ Complete                               |
+| 3    | MongoDB Connection & Models     | ✅ Complete *(Connection Pending Config)* |
+| 4    | PDF Upload & Text Extraction    | 🔲 Upcoming                               |
+| 5    | Search & Collections            | 🔲 Upcoming                               |
+| 6    | AI Summaries                    | 🔲 Upcoming                               |
+| 7    | Authentication                  | 🔲 Upcoming                               |
+| 8    | Deployment                      | 🔲 Upcoming                               |
 
 ---
 
@@ -38,6 +38,9 @@ Upload academic PDFs, extract their text, manage your library, search content, o
 
 - **Node.js** v18 or later (tested on v24.12.0)
 - **npm** v9 or later (tested on v11.6.2)
+- **MongoDB** (optional for offline model checks, required for live database features):
+  - Local MongoDB Community Server running on `mongodb://127.0.0.1:27017`
+  - OR a MongoDB Atlas cloud cluster URI
 
 ---
 
@@ -55,7 +58,15 @@ researchvault-ai/
 │   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
-├── server/              # Node.js + Express backend (port 5000)
+├── server/              # Node.js + Express backend (port 5001)
+│   ├── config/
+│   │   └── db.js        # Mongoose connection & status helper
+│   ├── models/
+│   │   ├── Paper.js     # Research paper data model & schema
+│   │   └── ResearchCollection.js # Collection data model
+│   ├── scripts/
+│   │   ├── check-models.js # Offline model validation tests
+│   │   └── check-db.js  # Live database connection test
 │   ├── server.js
 │   ├── .env.example
 │   └── package.json
@@ -83,26 +94,81 @@ cd server
 npm install
 ```
 
-### 3. Configure the backend environment *(optional)*
+### 3. Configure the backend environment
 
-Copy the example file and adjust if needed:
+Copy the example file:
 
 ```bash
 cp server/.env.example server/.env
 ```
 
-The default port is `5000`. No other configuration is required for Step 2.
+`server/.env.example` contains:
+```env
+PORT=5001
+MONGODB_URI=mongodb://127.0.0.1:27017/researchvault_ai
+```
 
-### 4. Start the backend
+---
+
+## MongoDB Setup
+
+### Purpose of Mongoose
+Mongoose is an Object Data Modeling (ODM) library for MongoDB and Node.js. It manages relationships between data, provides schema validation, and translates between objects in code and their representation in MongoDB.
+
+### Option A: Local MongoDB
+If you have MongoDB installed locally:
+1. Start MongoDB:
+   - macOS (Homebrew): `brew services start mongodb-community`
+   - Linux: `sudo systemctl start mongod`
+   - Windows: Start the MongoDB service via Services app or `net start MongoDB`
+2. Set `MONGODB_URI` in `server/.env`:
+   ```env
+   MONGODB_URI=mongodb://127.0.0.1:27017/researchvault_ai
+   ```
+
+### Option B: MongoDB Atlas (Cloud)
+If you prefer MongoDB Atlas:
+1. Sign up or log in at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Create a free cluster (M0 sandbox).
+3. Under **Security → Database Access**, create a database user with password authentication.
+4. Under **Security → Network Access**, add your current IP address (or `0.0.0.0/0` for development).
+5. Under **Database → Connect → Drivers (Node.js)**, copy your connection string.
+6. In `server/.env`, paste your URI replacing `<username>` and `<password>`:
+   ```env
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.example.mongodb.net/researchvault_ai?retryWrites=true&w=majority
+   ```
+   *(Never commit `server/.env` to version control!)*
+
+### Verification Scripts
+
+#### Offline Model Validation (No MongoDB required)
+Tests Mongoose document schema validation (required fields, ranges, nested notes, subdocument timestamps):
+```bash
+cd server
+npm run check:models
+```
+
+#### Live Database Connection Check (Requires reachable MongoDB)
+Tests connecting to the database using `MONGODB_URI`:
+```bash
+cd server
+npm run check:db
+```
+
+---
+
+## Running the Applications
+
+### 1. Start the Express backend
 
 ```bash
 cd server
-npm run dev        # development (nodemon, auto-restart on change)
+npm run dev        # development with nodemon auto-restart
 # or
-npm start          # production (plain node)
+npm start          # production node
 ```
 
-### 5. Start the frontend
+### 2. Start the React frontend
 
 Open a **second terminal**:
 
@@ -120,33 +186,56 @@ npm run dev
 | Frontend         | http://localhost:5173                |
 | Backend          | http://localhost:5001                |
 | Health endpoint  | http://localhost:5001/api/health     |
+| Ready endpoint   | http://localhost:5001/api/health/ready |
 
-> **Note:** Port 5001 is used instead of 5000 because macOS Monterey and later reserves port 5000 for the AirPlay Receiver (Control Center). This avoids a conflict that would prevent the server from starting.
+> **Note:** Port 5001 is used because macOS Monterey and later reserves port 5000 for AirPlay Receiver (Control Center).
 
 ---
 
-## Health Endpoint
+## Health Endpoints
 
-```
-GET http://localhost:5001/api/health
-```
+### 1. General Health: `GET /api/health`
 
-Expected response (HTTP 200):
+Confirms API server is running and reports MongoDB state without exposing credentials.
 
+**HTTP 200 (Connected):**
 ```json
 {
   "ok": true,
-  "message": "ResearchVault AI API is running"
+  "message": "ResearchVault AI API is running",
+  "database": {
+    "configured": true,
+    "state": "connected"
+  }
 }
 ```
 
+**HTTP 200 (Unconfigured / Dev mode):**
+```json
+{
+  "ok": true,
+  "message": "ResearchVault AI API is running",
+  "database": {
+    "configured": false,
+    "state": "not_configured"
+  }
+}
+```
+
+### 2. Readiness: `GET /api/health/ready`
+
+Used by container orchestrators and health monitors to determine if the service can handle database queries.
+
+- **HTTP 200 OK**: Returned when MongoDB state is `connected`.
+- **HTTP 503 Service Unavailable**: Returned when MongoDB is disconnected or not configured.
+
 ---
 
-## Notes
+## Security Notes
 
-- **MongoDB** will be integrated in **Step 3**. No database connection is included in this step.
-- Do not commit `server/.env` — it is listed in `.gitignore`. Use `server/.env.example` as the template.
-- The frontend landing page automatically calls the health endpoint and displays the connection status.
+- `server/.env` is ignored by `.gitignore` and must never be committed.
+- Passwords and full connection strings are never logged to console or returned via API responses.
+- The server starts safely in development even if `MONGODB_URI` is not configured.
 
 ---
 
