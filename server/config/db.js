@@ -11,6 +11,9 @@ import mongoose from 'mongoose';
 let connectionState = 'disconnected';
 let listenersRegistered = false;
 
+// Disable Mongoose operation buffering so queries fail or return immediately if database is offline/unconfigured
+mongoose.set('bufferCommands', false);
+
 /**
  * Register mongoose connection event listeners once.
  */

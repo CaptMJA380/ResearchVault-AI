@@ -115,11 +115,11 @@ export function startServer(port = PORT) {
       console.log('  ║  Collections:   /api/collections                 ║');
       console.log('  ║  Semantic:      /api/search/semantic             ║');
       console.log('  ╚══════════════════════════════════════════════════╝');
-      console.log('');
-
-      // Connect database asynchronously without crashing if absent in dev mode
-      await connectDB();
       resolve(server);
+      // Connect database asynchronously without crashing if absent in dev mode
+      connectDB().catch((err) => {
+        console.warn('  [MongoDB] Async connection error:', err.message);
+      });
     });
 
     server.on('error', (err) => {

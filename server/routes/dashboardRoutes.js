@@ -12,6 +12,27 @@ const router = express.Router();
  */
 router.get('/stats', async (req, res, next) => {
   try {
+    const dbStatus = getDBStatus();
+
+    // If database is not connected, return zero counts and system status gracefully
+    if (dbStatus.state !== 'connected') {
+      return res.status(200).json({
+        success: true,
+        stats: {
+          totalPapers: 0,
+          totalCollections: 0,
+          totalNotes: 0,
+          totalSummaries: 0,
+        },
+        recentPapers: [],
+        recentSummaries: [],
+        system: {
+          database: dbStatus,
+          ai: getAIStatus(),
+        },
+      });
+    }
+
     const [papersCount, collectionsCount, papersWithNotes, recentPapers, recentSummaries] =
       await Promise.all([
         Paper.countDocuments(),
