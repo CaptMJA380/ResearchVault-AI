@@ -95,10 +95,25 @@ const paperSchema = new mongoose.Schema(
       min: [1500, 'Publication year must be 1500 or later'],
       max: [currentYear + 5, `Publication year cannot exceed ${currentYear + 5}`],
     },
+    journalOrVenue: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    doi: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     abstract: {
       type: String,
       default: '',
       trim: true,
+    },
+    keywords: {
+      type: [String],
+      default: [],
+      set: (kw) => (Array.isArray(kw) ? kw.map((k) => k.trim()).filter(Boolean) : []),
     },
     tags: {
       type: [String],
@@ -140,10 +155,28 @@ const paperSchema = new mongoose.Schema(
       default: () => ({}),
     },
 
+    // References extracted from document
+    references: {
+      type: [String],
+      default: [],
+    },
+
     // Personal notes subdocuments
     notes: {
       type: [noteSchema],
       default: [],
+    },
+
+    // Vector embedding for semantic search (e.g. 768-dim from Gemini text-embedding-004 or local fallback)
+    embedding: {
+      type: [Number],
+      default: undefined,
+      select: true,
+    },
+    embeddingModel: {
+      type: String,
+      default: '',
+      trim: true,
     },
   },
   {
@@ -151,9 +184,11 @@ const paperSchema = new mongoose.Schema(
   }
 );
 
-// Basic search indexes for frequently queried metadata
+// Indexes for common queries
 paperSchema.index({ tags: 1 });
 paperSchema.index({ publicationYear: 1 });
+paperSchema.index({ keywords: 1 });
+paperSchema.index({ createdAt: -1 });
 
 const Paper = mongoose.model('Paper', paperSchema);
 

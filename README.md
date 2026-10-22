@@ -1,244 +1,251 @@
-# ResearchVault AI
+# ResearchVault AI — Academic Research Intelligence Platform
 
-A research paper intelligence platform for academics, students, and researchers.
-
-Upload academic PDFs, extract their text, manage your library, search content, organise collections, add notes, and generate AI-assisted summaries — all in one place.
+A full-stack MERN application that provides undergraduate, postgraduate, and faculty researchers with an integrated workspace to upload academic PDFs, automatically extract machine-readable text and references, organize literature into collections, maintain personal research notes, and generate structured AI-assisted summaries on demand.
 
 ---
 
-## Technology Stack
+## 1. Problem Statement & Objectives
 
-| Layer       | Technology                          |
-|-------------|-------------------------------------|
-| Frontend    | React 18 + Vite 5                   |
-| Backend     | Node.js 24 + Express 4              |
-| Database    | MongoDB + Mongoose                  |
-| PDF Extract | pdf-parse *(Step 4)*                |
-| AI          | Google Gemini / OpenAI *(Step 6)*   |
-| Auth        | JWT *(Step 7)*                      |
+### Problem Statement
+Academic researchers and university students frequently struggle with research paper overload. Scholarly PDFs are scattered across local folders and cloud drives. Researchers spend valuable hours manually extracting key findings, organizing references, tracking personal notes, and synthesizing literature reviews across multiple disconnected tools.
 
----
-
-## Implementation Status
-
-| Step | Description                     | Status                                    |
-|------|---------------------------------|-------------------------------------------|
-| 1    | Project Planning                | ✅ Complete                               |
-| 2    | MERN Stack Setup                | ✅ Complete                               |
-| 3    | MongoDB Connection & Models     | ✅ Complete *(Connection Pending Config)* |
-| 4    | PDF Upload & Text Extraction    | 🔲 Upcoming                               |
-| 5    | Search & Collections            | 🔲 Upcoming                               |
-| 6    | AI Summaries                    | 🔲 Upcoming                               |
-| 7    | Authentication                  | 🔲 Upcoming                               |
-| 8    | Deployment                      | 🔲 Upcoming                               |
+### Solution & Objectives
+ResearchVault AI consolidates the research workflow into a single, cohesive academic SaaS platform:
+1. **Automated Document Intelligence**: Extract machine-readable text from academic PDFs without destroying paragraph structure.
+2. **Bibliographic Management**: Filter, search, and curate papers with editable titles, authors, venues, DOIs, and tags.
+3. **Structured AI Synthesis**: Generate structured research summaries (Overview, Problem, Methodology, Main Findings, Limitations) using Google Gemini without hallucinating claims.
+4. **Research Collections & Notes**: Group papers into thematic collections and maintain personal literature review notes.
+5. **Scholarly Discovery**: Find conceptually related papers using vector embedding cosine similarity and export BibTeX citations.
 
 ---
 
-## Prerequisites
+## 2. Technology Stack & Architecture
 
-- **Node.js** v18 or later (tested on v24.12.0)
-- **npm** v9 or later (tested on v11.6.2)
-- **MongoDB** (optional for offline model checks, required for live database features):
-  - Local MongoDB Community Server running on `mongodb://127.0.0.1:27017`
-  - OR a MongoDB Atlas cloud cluster URI
+| Layer | Technology | Version | Purpose |
+|---|---|---|---|
+| **Frontend** | React + Vite | React 18.3 / Vite 5.4 | Component-based, responsive academic SaaS interface |
+| **Routing** | React Router DOM | 6.27.0 | Client-side routing across 6 dedicated views |
+| **Icons & Design** | Lucide React | 0.460.0 | Forest-green academic visual identity system |
+| **HTTP Client** | Axios | 1.7.7 | Centralized API client with response interceptors |
+| **Backend** | Node.js + Express | Node 24.12 / Express 4.21 | RESTful modular API (routes, controllers, middleware) |
+| **File Processing** | Multer + pdf-parse | Multer 2.4 / pdf-parse 2.4 | 20 MB upload limits, signature checks, text extraction |
+| **Database** | MongoDB + Mongoose | Mongoose 9.11.1 | Document schemas, embedded subdocuments, query indexes |
+| **AI Integration** | Google GenAI SDK | `@google/genai` 2.30.0 | Structured synthesis (`gemini-2.5-flash`) & vector embeddings |
 
 ---
 
-## Project Structure
+## 3. Project Structure
 
 ```
 researchvault-ai/
-├── client/              # React + Vite frontend (port 5173)
-│   ├── public/
+├── client/                      # React 18 + Vite frontend (Port 5173)
+│   ├── public/                  # Favicons and public assets
 │   ├── src/
-│   │   ├── App.jsx
+│   │   ├── api/
+│   │   │   └── client.js        # Centralized Axios API client
+│   │   ├── layouts/
+│   │   │   ├── MainLayout.jsx   # Sidebar, topbar, and router outlet
+│   │   │   └── MainLayout.css
+│   │   ├── pages/
+│   │   │   ├── DashboardPage.jsx# Live database metrics and recent items
+│   │   │   ├── LibraryPage.jsx  # Search, filter, paginate, delete papers
+│   │   │   ├── UploadPage.jsx   # Drag-and-drop PDF upload with metadata
+│   │   │   ├── PaperDetailPage.jsx # Tabbed workspace (Summary, Text, Notes, Refs)
+│   │   │   ├── CollectionsPage.jsx # Thematic research collections manager
+│   │   │   └── SearchPage.jsx   # Dual-mode (Semantic vector & Keyword) search
+│   │   ├── App.jsx              # React Router configuration
 │   │   ├── App.css
-│   │   ├── index.css
+│   │   ├── index.css            # Global CSS variables & reset
 │   │   └── main.jsx
 │   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
-├── server/              # Node.js + Express backend (port 5001)
+├── server/                      # Node.js + Express backend (Port 5001)
 │   ├── config/
-│   │   └── db.js        # Mongoose connection & status helper
+│   │   └── db.js                # Mongoose connection & status tracker
+│   ├── controllers/
+│   │   ├── paperController.js   # Paper CRUD, notes, related, BibTeX
+│   │   └── collectionController.js # Collection CRUD & paper membership
+│   ├── middleware/
+│   │   ├── uploadMiddleware.js  # Multer 20 MB PDF validator
+│   │   └── errorMiddleware.js   # Centralized error handler
 │   ├── models/
-│   │   ├── Paper.js     # Research paper data model & schema
-│   │   └── ResearchCollection.js # Collection data model
+│   │   ├── Paper.js             # Paper schema, notes subdocs, AI summary
+│   │   └── ResearchCollection.js # Collection schema referencing Paper
+│   ├── routes/
+│   │   ├── paperRoutes.js       # /api/papers endpoints
+│   │   ├── collectionRoutes.js  # /api/collections endpoints
+│   │   ├── searchRoutes.js      # /api/search/semantic endpoint
+│   │   └── dashboardRoutes.js   # /api/dashboard/stats endpoint
+│   ├── services/
+│   │   ├── pdfService.js        # PDF text parser & metadata heuristics
+│   │   └── aiService.js         # Google GenAI summarization & embeddings
+│   ├── utils/
+│   │   └── citationUtils.js     # BibTeX formatting & ObjectId checks
 │   ├── scripts/
-│   │   ├── check-models.js # Offline model validation tests
-│   │   └── check-db.js  # Live database connection test
-│   ├── server.js
-│   ├── .env.example
+│   │   ├── check-models.js      # Offline Mongoose schema validation tests
+│   │   ├── check-db.js          # Live database connection tester
+│   │   └── seed-demo.js         # Non-destructive demo seeder
+│   ├── tests/
+│   │   ├── backend-unit.test.js # Unit tests (citations, vectors, pdf)
+│   │   └── api.test.js          # REST API integration smoke tests
+│   ├── uploads/                 # Local disk storage for uploaded PDFs
+│   ├── server.js                # Express app entry point
+│   ├── .env.example             # Configuration template
 │   └── package.json
 ├── docs/
-│   └── PROJECT_PLAN.md
+│   ├── PROJECT_PLAN.md          # Implementation milestones
+│   ├── API_DOCUMENTATION.md     # Detailed REST endpoint specifications
+│   ├── TEST_REPORT.md           # Full testing execution records
+│   ├── ASSESSMENT_MAPPING.md    # 30-mark college rubric mapping
+│   └── VIVA_PREPARATION.md      # Technical defense & 20 viva Q&As
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
-## Getting Started
+## 4. Prerequisites
 
-### 1. Install frontend dependencies
+- **Node.js**: v18.0.0 or later (tested on v24.12.0)
+- **npm**: v9.0.0 or later (tested on v11.6.2)
+- **MongoDB** *(Optional for offline checks; required for live data)*:
+  - Local MongoDB Community Server running on `mongodb://127.0.0.1:27017`
+  - **OR** a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cloud database URI
 
-```bash
-cd client
-npm install
-```
+---
 
-### 2. Install backend dependencies
+## 5. Installation & Setup
 
+### 1. Install Backend Dependencies
 ```bash
 cd server
 npm install
 ```
 
-### 3. Configure the backend environment
+### 2. Install Frontend Dependencies
+```bash
+cd ../client
+npm install
+```
 
-Copy the example file:
-
+### 3. Configure Backend Environment
+Copy the example configuration file:
 ```bash
 cp server/.env.example server/.env
 ```
 
-`server/.env.example` contains:
+`server/.env` contents:
 ```env
 PORT=5001
 MONGODB_URI=mongodb://127.0.0.1:27017/researchvault_ai
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
 ```
+
+> **Note on Port 5001**: Port 5001 is used because macOS Monterey+ reserves port 5000 for Apple's AirPlay Receiver (Control Center).
+> **Note on GEMINI_API_KEY**: The application runs without an API key. Semantic search automatically falls back to local term-feature vectors.
 
 ---
 
-## MongoDB Setup
+## 6. Running the Applications
 
-### Purpose of Mongoose
-Mongoose is an Object Data Modeling (ODM) library for MongoDB and Node.js. It manages relationships between data, provides schema validation, and translates between objects in code and their representation in MongoDB.
-
-### Option A: Local MongoDB
-If you have MongoDB installed locally:
-1. Start MongoDB:
-   - macOS (Homebrew): `brew services start mongodb-community`
-   - Linux: `sudo systemctl start mongod`
-   - Windows: Start the MongoDB service via Services app or `net start MongoDB`
-2. Set `MONGODB_URI` in `server/.env`:
-   ```env
-   MONGODB_URI=mongodb://127.0.0.1:27017/researchvault_ai
-   ```
-
-### Option B: MongoDB Atlas (Cloud)
-If you prefer MongoDB Atlas:
-1. Sign up or log in at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
-2. Create a free cluster (M0 sandbox).
-3. Under **Security → Database Access**, create a database user with password authentication.
-4. Under **Security → Network Access**, add your current IP address (or `0.0.0.0/0` for development).
-5. Under **Database → Connect → Drivers (Node.js)**, copy your connection string.
-6. In `server/.env`, paste your URI replacing `<username>` and `<password>`:
-   ```env
-   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.example.mongodb.net/researchvault_ai?retryWrites=true&w=majority
-   ```
-   *(Never commit `server/.env` to version control!)*
-
-### Verification Scripts
-
-#### Offline Model Validation (No MongoDB required)
-Tests Mongoose document schema validation (required fields, ranges, nested notes, subdocument timestamps):
+### Terminal 1: Start the Backend Server
 ```bash
 cd server
-npm run check:models
+npm run dev        # Development mode (nodemon auto-restart)
+# or
+npm start          # Standard Node.js execution
 ```
+The server will start at **`http://localhost:5001`**.
 
-#### Live Database Connection Check (Requires reachable MongoDB)
-Tests connecting to the database using `MONGODB_URI`:
+### Terminal 2: Start the React Frontend
+```bash
+cd client
+npm run dev
+```
+The frontend application will be live at **`http://localhost:5173`**.
+
+---
+
+## 7. Populating Demonstration Data
+
+To test and demonstrate the application with realistic scholarly papers without manually uploading files first:
+
+```bash
+cd server
+npm run seed:demo
+```
+This populates 3 seminal research papers (*Transformers*, *Deep ResNet*, *Retrieval-Augmented Generation*) with full AI summaries, references, and notes, plus a pre-configured research collection.
+
+---
+
+## 8. Executing the Test Suites
+
+The project includes automated offline and integration test suites:
+
+### Run All Automated Tests
+```bash
+cd server
+npm test
+```
+This automatically runs:
+1. `npm run check:models` — 14 offline Mongoose schema validation checks.
+2. `node tests/backend-unit.test.js` — 6 unit tests for citations, vectors, and PDF parsing.
+3. `NODE_ENV=test node tests/api.test.js` — 6 REST API integration smoke tests.
+
+### Test Live Database Connection
 ```bash
 cd server
 npm run check:db
 ```
 
----
-
-## Running the Applications
-
-### 1. Start the Express backend
-
-```bash
-cd server
-npm run dev        # development with nodemon auto-restart
-# or
-npm start          # production node
-```
-
-### 2. Start the React frontend
-
-Open a **second terminal**:
-
+### Verify Frontend Production Build
 ```bash
 cd client
-npm run dev
+npm run build
 ```
 
 ---
 
-## Application URLs
+## 9. API Endpoint Reference
 
-| Service          | URL                                  |
-|------------------|--------------------------------------|
-| Frontend         | http://localhost:5173                |
-| Backend          | http://localhost:5001                |
-| Health endpoint  | http://localhost:5001/api/health     |
-| Ready endpoint   | http://localhost:5001/api/health/ready |
-
-> **Note:** Port 5001 is used because macOS Monterey and later reserves port 5000 for AirPlay Receiver (Control Center).
-
----
-
-## Health Endpoints
-
-### 1. General Health: `GET /api/health`
-
-Confirms API server is running and reports MongoDB state without exposing credentials.
-
-**HTTP 200 (Connected):**
-```json
-{
-  "ok": true,
-  "message": "ResearchVault AI API is running",
-  "database": {
-    "configured": true,
-    "state": "connected"
-  }
-}
-```
-
-**HTTP 200 (Unconfigured / Dev mode):**
-```json
-{
-  "ok": true,
-  "message": "ResearchVault AI API is running",
-  "database": {
-    "configured": false,
-    "state": "not_configured"
-  }
-}
-```
-
-### 2. Readiness: `GET /api/health/ready`
-
-Used by container orchestrators and health monitors to determine if the service can handle database queries.
-
-- **HTTP 200 OK**: Returned when MongoDB state is `connected`.
-- **HTTP 503 Service Unavailable**: Returned when MongoDB is disconnected or not configured.
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Observability check returning server, DB, and AI status |
+| `GET` | `/api/health/ready` | Readiness probe (200 OK / 503 Service Unavailable) |
+| `GET` | `/api/dashboard/stats` | Live database totals, recent papers, and recent summaries |
+| `GET` | `/api/papers` | Paginated papers list with search, tag, and year filters |
+| `POST` | `/api/papers` | Upload academic PDF (20 MB max) & extract metadata/text |
+| `GET` | `/api/papers/:id` | Full paper details, extracted text, notes, and references |
+| `PUT` | `/api/papers/:id` | Update paper bibliographic metadata |
+| `DELETE` | `/api/papers/:id` | Delete paper, unlinking collections & deleting PDF file |
+| `GET` | `/api/papers/:id/file` | Secure PDF stream with path traversal protection |
+| `POST` | `/api/papers/:id/summarize` | Trigger on-demand Google Gemini structured summary |
+| `POST` | `/api/papers/:id/notes` | Add embedded personal literature review note |
+| `DELETE` | `/api/papers/:id/notes/:noteId` | Remove personal note subdocument |
+| `GET` | `/api/papers/:id/related` | Compute weighted scholarly connections across library |
+| `GET` | `/api/papers/:id/export/bibtex` | Export formatted BibTeX citation |
+| `GET` | `/api/collections` | List collections with populated paper titles |
+| `POST` | `/api/collections` | Create research collection |
+| `PUT` | `/api/collections/:id` | Update collection or add/remove papers atomically |
+| `DELETE` | `/api/collections/:id` | Delete collection (preserves library papers) |
+| `GET` | `/api/search/semantic` | Dual-mode vector embedding similarity ranking |
 
 ---
 
-## Security Notes
+## 10. Security & Privacy Notes
 
-- `server/.env` is ignored by `.gitignore` and must never be committed.
-- Passwords and full connection strings are never logged to console or returned via API responses.
-- The server starts safely in development even if `MONGODB_URI` is not configured.
+1. **Credentials**: Secrets (`MONGODB_URI`, `GEMINI_API_KEY`) are managed exclusively via environment variables and excluded from Git.
+2. **File Safety**: Uploaded PDFs are restricted to 20 MB, checked for `%PDF-` signature, saved with random hexadecimal filenames, and protected against path traversal.
+3. **Local Educational Scope**: ResearchVault AI is designed as a local single-user educational proof of concept. For public deployment, multi-user JWT authentication and rate limiting must be added.
 
 ---
 
-## Documentation
+## 11. Documentation Links
 
-- [Project Plan](./docs/PROJECT_PLAN.md)
+- [Project Milestones (`docs/PROJECT_PLAN.md`)](./docs/PROJECT_PLAN.md)
+- [REST API Specifications (`docs/API_DOCUMENTATION.md`)](./docs/API_DOCUMENTATION.md)
+- [Automated Test Report (`docs/TEST_REPORT.md`)](./docs/TEST_REPORT.md)
+- [30-Mark Rubric Mapping (`docs/ASSESSMENT_MAPPING.md`)](./docs/ASSESSMENT_MAPPING.md)
+- [Viva & Technical Defense Guide (`docs/VIVA_PREPARATION.md`)](./docs/VIVA_PREPARATION.md)
