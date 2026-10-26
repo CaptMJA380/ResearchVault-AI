@@ -1,6 +1,7 @@
 import express from 'express';
 import Paper from '../models/Paper.js';
 import { generateTextEmbedding, cosineSimilarity, isAIConfigured } from '../services/aiService.js';
+import { getDBStatus } from '../config/db.js';
 
 const router = express.Router();
 
@@ -17,6 +18,19 @@ router.get('/semantic', async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Query parameter "q" is required for semantic search.',
+      });
+    }
+
+    const dbStatus = getDBStatus();
+    if (dbStatus.state !== 'connected') {
+      return res.status(200).json({
+        success: true,
+        query: q.trim(),
+        searchMode: isAIConfigured() ? 'gemini-embedding-similarity' : 'local-semantic-vector-similarity',
+        providerConfigured: isAIConfigured(),
+        count: 0,
+        data: [],
+        notice: 'Database is offline or not configured. Connect MongoDB in server/.env to search persisted papers.',
       });
     }
 

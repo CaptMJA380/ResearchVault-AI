@@ -5,10 +5,25 @@ import ResearchCollection from '../models/ResearchCollection.js';
 import { extractTextFromPDFBuffer, extractMetadataSuggestions, UPLOAD_DIR } from '../services/pdfService.js';
 import { generatePaperSummary, generateTextEmbedding, cosineSimilarity } from '../services/aiService.js';
 import { formatBibTeX, isValidObjectId } from '../utils/citationUtils.js';
+import { getDBStatus } from '../config/db.js';
 
 // ─── GET /api/papers ──────────────────────────────────────────────────────────
 export async function getPapers(req, res, next) {
   try {
+    const dbStatus = getDBStatus();
+    if (dbStatus.state !== 'connected') {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        pagination: {
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        },
+        notice: 'Database is offline or not configured. Connect MongoDB in server/.env to view persisted papers.',
+      });
+    }
     const {
       search,
       tag,

@@ -1,10 +1,19 @@
 import ResearchCollection from '../models/ResearchCollection.js';
 import Paper from '../models/Paper.js';
 import { isValidObjectId } from '../utils/citationUtils.js';
+import { getDBStatus } from '../config/db.js';
 
 // ─── GET /api/collections ─────────────────────────────────────────────────────
 export async function getCollections(req, res, next) {
   try {
+    const dbStatus = getDBStatus();
+    if (dbStatus.state !== 'connected') {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        notice: 'Database is offline or not configured. Connect MongoDB in server/.env to view collections.',
+      });
+    }
     const collections = await ResearchCollection.find()
       .populate('paperIds', 'title authors publicationYear tags')
       .sort({ createdAt: -1 })
